@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  width: 280px;
+  height: 340px;
+  background: transparent;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+#pet {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  cursor: grab;
+}
+
+#pet .body {
+  width: 100px;
+  height: 80px;
+  background: #4a90d9;
+  border-radius: 50px 50px 30px 30px;
+  position: relative;
+}
+
+#pet .eye {
+  width: 16px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 20px;
+}
+
+#pet .eye.left { left: 22px; }
+#pet .eye .pupil {
+  width: 8px;
+  height: 10px;
+  background: #111;
+  border-radius: 50%;
+  position: absolute;
+  top: 5px;
+  left: 4px;
+}
+
+#pet .mouth {
+  width: 20px;
+  height: 10px;
+  border-bottom: 3px solid white;
+  border-radius: 0 0 20px 20px;
+  position: absolute;
+  bottom: 15px;
+  left: 40px;
+}
+
+#pet .ear {
+  width: 20px;
+  height: 25px;
+  background: #3a7bc8;
+  border-radius: 50% 50% 0 0;
+  position: absolute;
+  top: -15px;
+}
+
+#pet .ear.left { left: 10px; }
+#pet .ear.right { right: 10px; }
+
+#pet .speech {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  margin-bottom: 10px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  position: relative;
+}
+
+#pet .speech::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white;
+}
+
+#pet .speech.show { opacity: 1; }
+
+#pet .legs {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: -5px;
+}
+
+#pet .leg {
+  width: 12px;
+  height: 20px;
+  background: #3a7bc8;
+  border-radius: 0 0 6px 6px;
+}
+</style>
+</head>
+<body>
+<div id="pet">
+  <div class="speech" id="speech"></div>
+  <div class="body">
+    <div class="ear left"></div>
+    <div class="ear right"></div>
+    <div class="eye left"><div class="pupil"></div></div>
+    <div class="eye right"><div class="pupil"></div></div>
+    <div class="mouth"></div>
+  </div>
+  <div class="legs">
+    <div class="leg"></div>
+    <div class="leg"></div>
+  </div>
+</div>
+
+<script>
+const pet = document.getElementById('pet');
+const speech = document.getElementById('speech');
+
+// Drag support
+let isDragging = false;
+let startX, startY;
+
+pet.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  pet.style.cursor = 'grabbing';
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+  window.electronAPI.dragWindow(dx, dy);
+  startX = e.clientX;
+  startY = e.clientY;
+});
+
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+  pet.style.cursor = 'grab';
+});
+
+// Click handler
+pet.addEventListener('click', () => {
+  const phrases = ['にゃ〜', 'ぽよ', 'うにゃ', 'ふわっ', 'ぴょ', 'はむ', 'ぎこち', 'ぽこ'];
+  showSpeech(phrases[Math.floor(Math.random() * phrases.length)]);
+});
+
+function showSpeech(text) {
+  speech.textContent = text;
+  speech.classList.add('show');
+  setTimeout(() => speech.classList.remove('show'), 2000);
+}
+
+// Listen for commands from main process
+if (window.electronAPI) {
+  window.electronAPI.onCommand((data) => {
+    if (data.command === 'say') {
+      showSpeech(data.text);
+    } else if (data.command === 'show') {
+      pet.style.display = 'block';
+    } else if (data.command === 'hide') {
+      pet.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>
