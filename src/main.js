@@ -1,5 +1,6 @@
 const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const http = require('http');
+const fs = require('fs');
 const path = require('path');
 
 const PORT = Number(process.env.PET_PORT || 17321);
@@ -80,7 +81,16 @@ function startControlServer() {
       else if (url.pathname === '/hide') result = hidePet();
       else if (url.pathname === '/toggle') result = togglePet();
       else if (url.pathname === '/say') { sendPetCommand('say', { text: url.searchParams.get('text') || '呼んだ？' }); result = { ok: true, visible }; }
-      else if (url.pathname === '/state') result = { ok: true, visible, port: PORT, host: HOST };
+      else if (url.pathname === '/state') result = {
+        ok: true,
+        visible,
+        port: PORT,
+        host: HOST,
+        appDir: __dirname,
+        petHtml: path.join(__dirname, 'pet.html'),
+        petImage: path.join(__dirname, 'pet-image.png'),
+        petImageExists: fs.existsSync(path.join(__dirname, 'pet-image.png'))
+      };
       else if (url.pathname === '/quit') { result = { ok: true, quitting: true }; setTimeout(() => app.quit(), 50); }
       else if (url.pathname === '/move') result = movePet(Number(url.searchParams.get('dx') || 0), Number(url.searchParams.get('dy') || 0));
       else result = { ok: false, error: 'unknown-command' };
